@@ -1,5 +1,14 @@
 <?php
 
+// タイトルタグのテキスト
+function apt_simple_title() {
+	if(!is_front_page()) {
+		//echo trim(wp_title('', false)) . ' | ';
+		wp_title(' | ', true, 'right');
+	}
+	bloginfo( 'name' );
+}
+
 // アイキャッチを使用できるように
 add_theme_support( 'post-thumbnails' );
 set_post_thumbnail_size( 208, 138, true );
@@ -170,3 +179,75 @@ function apt_convert_yen($yen) {
 		return $yen;
 	}
 }
+
+// サイトIDのタグをトップページとそれ以外で切り替える
+function apt_site_id() {
+	if(is_front_page()) {
+		echo "h1";
+	} else {
+		echo "div";
+	}
+}
+
+// 検索ワードが未入力または0の場合にsearch.phpをテンプレートとして利用する
+function apt_search_redirect() {
+	global $wp_query;
+	$wp_query->is_search = true;
+	$wp_query->is_home = false;
+	if(file_exists(TEMPLATEPATH . 'search.php')) {
+		include(TEMPLATEPATH . 'search.php');
+		exit;
+	}
+	if(isset($_GET['s']) && $_GET['s'] == false) {
+		add_action('template_redirect', 'apt_search_redirect');
+	}
+}
+
+// wp_nav_menuにcurrentクラス属性を追加
+function apt_current_nav($css, $item) {
+	if(is_search()) {
+		return $css;
+	}
+	if($item->title == 'ツアー情報') {
+		if(get_post_type() == 'tour' || is_tax('area')) {
+			$css[] = 'current-page-ancestor';
+		}
+	} elseif($item->title == '営業所') {
+		if(get_post_type() == 'branch') {
+			$css[] = 'current-page-ancestor';
+		}
+	}
+
+	return $css;
+}
+
+// カテゴリーイメージで使用するファイル名を出力
+function apt_category_image() {
+	global $post;
+	$cat_img = 'def';
+	if(is_page()) {
+		if(in_array($post->post_name, array('about', 'csr', 'tour-info', 'office'))) {
+			$cat_img = $post->post_name;
+		} else {
+			$anc = array_pop(get_post_ancestors($post));
+			if($anc) {
+				$anc = get_page($anc);
+				//$anc = get_post($anc);
+				if(in_array($anc->post_name, array('about', 'csr'))) $cat_img = $anc->post_name;
+			}
+		}
+	}
+	if(get_post_type() == 'branch' ) $cat_img = 'office';
+	if(get_post_type() == 'tour' || is_tax() == 'area') $cat_img = 'tour-info';
+	if(is_search()) $cat_img = 'def';
+
+	$cat_img = 'img_cat_' . $cat_img . '.png';
+
+	return $cat_img;
+}
+
+// 抜粋の文末を変更
+function apt_excerpt_more($more) {
+	return '...';
+}
+add_filter('excerpt_more', 'apt_excerpt_more');
