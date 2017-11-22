@@ -59,7 +59,9 @@
 
   <?php
   	if(class_exists('Wp_SiteManager_bread_crumb')):
+      add_filter('bread_crumb_arr', 'apt_bread_crumb');
   		Wp_SiteManager_bread_crumb::bread_crumb('navi_element=div&elm_id=bread_crumb');
+      remove_filter('bread_crumb_arr', 'apt_bread_crumb');
   	endif;
   ?>
 
